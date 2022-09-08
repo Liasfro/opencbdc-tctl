@@ -4,8 +4,10 @@ ARG APP_BASE_IMAGE=ubuntu:20.04
 FROM $GOLANG_BUILD_IMAGE as build-env
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y libpcap-dev
 RUN mkdir /src
+RUN mkdir /app
 COPY go.mod /src/go.mod
 COPY go.sum /src/go.sum
+COPY requirements.txt /app/requirements.txt
 WORKDIR /src
 RUN go mod download
 COPY . /src
@@ -18,5 +20,6 @@ RUN go build -ldflags "-X main.GitCommit=$GIT_COMMIT -X main.BuildDate=$GIT_DATE
 FROM $APP_BASE_IMAGE
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y libpcap-dev build-essential libsfml-dev iproute2 wget cmake python3-pip libgtest-dev lcov git libtool automake clang-tidy
 WORKDIR /app
+COPY requirements.txt /app/requirements.txt
 COPY --from=build-env /src/cmd/agent/agent /app/
 CMD ./agent
